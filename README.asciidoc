@@ -1,0 +1,11 @@
+= rina.utils.apps.echo
+
+RINA expiremental java bindings.
+
+
+== Build instructions
+
+. Install google-protobuf
+. Install google-protobuf java runtime
+. Run gradlew build
+
