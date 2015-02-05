@@ -1,0 +1,61 @@
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+
+mainClassName = 'rina.utils.apps.echo'
+
+repositories {
+  mavenCentral();
+  flatDir {
+       dirs 'libs'
+  }
+}
+
+buildscript {
+
+  repositories {
+    mavenCentral();
+  }
+
+  // protobuf plugin
+  dependencies {
+      classpath 'com.andrewkroh.gradle:gradle-protobuf-plugin:0.4.0'
+//     classpath 'com.tomcawley:gradle-protobuf-plugin:0.2'
+  }
+}
+
+apply plugin: 'protobuf'
+
+// Point to your protobuf library for compilation of the generated files
+dependencies {
+    // Runtime library
+    compile 'com.google.protobuf:protobuf-java:2.5.+'
+    compile 'commons-logging:commons-logging:1.2'
+    compile name: 'librina'
+    
+    testCompile group: 'junit', name: 'junit', version: 'latest.release'
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: 'latest.release'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: 'latest.release'
+
+
+    // And finally the important stuff
+    protobuf {
+      // Where to find the protofiles
+      src = 'protofiles'
+    }
+}
+
+jar {
+    baseName = rootProject.name
+    version = System.env['BUILD_NUMBER']
+    version = version == null ? 0 : version
+    manifest {
+        attributes("Implementation-Title": baseName, "Implementation-Version": version)
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2.1'
+}
