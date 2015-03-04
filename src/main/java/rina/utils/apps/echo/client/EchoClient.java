@@ -93,8 +93,9 @@ FlowAllocationListener, FlowDeallocationListener {
 			ApplicationProcessNamingInformation clientApNamingInfo, 
                           int timeout, int rate, int gap){
 		try {
-			rina.initialize(LogHelper.getLibrinaLogLevel(), 
-					LogHelper.getLibrinaLogFile());
+//			rina.initialize(LogHelper.getLibrinaLogLevel(), 
+//					LogHelper.getLibrinaLogFile());
+			rina.initialize("INFO", "/tmp/echo.client.log");
 		} catch(Exception ex){
 			log.error("Problems initializing librina, exiting: "+ex.getMessage());
 			System.exit(-1);
@@ -159,7 +160,7 @@ FlowAllocationListener, FlowDeallocationListener {
 			RegisterApplicationResponseEvent event) {
 		if (event.getResult() == 0) {
 			try {
-				// mcr: revised API
+				// mcr: revised API without typo
 //				rina.getIpcManager().commitPendingResitration(
 //						event.getSequenceNumber(), event.getDIFName());
 				rina.getIpcManager().commitPendingRegistration(
