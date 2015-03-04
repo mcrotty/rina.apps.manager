@@ -107,11 +107,11 @@ public class FlowReader implements Runnable, FlowDeallocationListener{
 	
 	private void terminateReader() {
 		if (flow.isAllocated()){
-			try{
+//			try{
 				rina.getIpcManager().requestFlowDeallocation(flow.getPortId());
-			}catch(FlowDeallocationException ex){
-				ex.printStackTrace();
-			}
+//			}catch(FlowDeallocationException ex){
+//				ex.printStackTrace();
+//			}
 		}
 		
 		timer.cancel();

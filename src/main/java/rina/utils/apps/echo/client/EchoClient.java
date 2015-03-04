@@ -8,13 +8,14 @@ import java.util.concurrent.Executors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import rina.utils.LogHelper;
-import rina.cdap.api.CDAPSessionManager;
-import rina.cdap.api.message.CDAPMessage;
-import rina.cdap.api.message.CDAPMessage.Opcode;
-import rina.cdap.api.message.ObjectValue;
-import rina.cdap.impl.CDAPSessionManagerImpl;
-import rina.cdap.impl.googleprotobuf.GoogleProtocolBufWireMessageProviderFactory;
+
+
+
+
+
+
+
+//import rina.utils.LogHelper;
 import rina.utils.apps.echo.TestInformation;
 import rina.utils.apps.echo.protobuf.EchoTestMessageEncoder;
 import rina.utils.apps.echo.utils.ApplicationRegistrationListener;
@@ -25,11 +26,19 @@ import eu.irati.librina.AllocateFlowRequestResultEvent;
 import eu.irati.librina.ApplicationProcessNamingInformation;
 import eu.irati.librina.ApplicationRegistrationInformation;
 import eu.irati.librina.ApplicationRegistrationType;
+import eu.irati.librina.ByteArrayObjectValue;
+import eu.irati.librina.CDAPMessage;
+import eu.irati.librina.CDAPMessage.Opcode;
+import eu.irati.librina.CDAPSessionManagerFactory;
+import eu.irati.librina.CDAPSessionManagerInterface;
 import eu.irati.librina.Flow;
 import eu.irati.librina.FlowDeallocatedEvent;
 import eu.irati.librina.FlowSpecification;
+import eu.irati.librina.ObjectValueInterface;
 import eu.irati.librina.RegisterApplicationResponseEvent;
+import eu.irati.librina.SerializedObject;
 import eu.irati.librina.UnregisterApplicationResponseEvent;
+import eu.irati.librina.WireMessageProviderFactory;
 import eu.irati.librina.rina;
 
 /**
@@ -69,7 +78,7 @@ FlowAllocationListener, FlowDeallocationListener {
 	
 	private IPCEventConsumer ipcEventConsumer = null;
 	private long handle = -1;
-	private CDAPSessionManager cdapSessionManager = null;
+	private CDAPSessionManagerInterface cdapSessionManager = null;
 	
 	private FlowReader flowReader = null;
 	
@@ -106,8 +115,12 @@ FlowAllocationListener, FlowDeallocationListener {
 		testInformation.setTimeout(timeout);
 		testInformation.setRate(rate);
 
-		cdapSessionManager = new CDAPSessionManagerImpl(
-				new GoogleProtocolBufWireMessageProviderFactory());
+		// mcr: Revised API
+		WireMessageProviderFactory factory = new WireMessageProviderFactory();
+		cdapSessionManager = new CDAPSessionManagerFactory().createCDAPSessionManager(factory, 0);
+		
+//		cdapSessionManager = new CDAPSessionManagerImpl(
+//				new GoogleProtocolBufWireMessageProviderFactory());
 		
 		timer = new Timer();
 		
@@ -123,7 +136,9 @@ FlowAllocationListener, FlowDeallocationListener {
 			ApplicationRegistrationInformation appRegInfo = 
 					new ApplicationRegistrationInformation(
 							ApplicationRegistrationType.APPLICATION_REGISTRATION_ANY_DIF);
-			appRegInfo.setApplicationName(clientApNamingInfo);
+			// mcr: Revised API
+			appRegInfo.setAppName(clientApNamingInfo);
+//			appRegInfo.setApplicationName(clientApNamingInfo);
 			rina.getIpcManager().requestApplicationRegistration(appRegInfo);
 			log.info("Requested registration of AE: "+clientApNamingInfo.toString());
 		}catch(Exception ex){
@@ -144,7 +159,10 @@ FlowAllocationListener, FlowDeallocationListener {
 			RegisterApplicationResponseEvent event) {
 		if (event.getResult() == 0) {
 			try {
-				rina.getIpcManager().commitPendingResitration(
+				// mcr: revised API
+//				rina.getIpcManager().commitPendingResitration(
+//						event.getSequenceNumber(), event.getDIFName());
+				rina.getIpcManager().commitPendingRegistration(
 						event.getSequenceNumber(), event.getDIFName());
 				log.info("Succesfully registered AE " + event.getApplicationName().toString() 
 						+ " to DIF" + event.getDIFName().getProcessName());
@@ -195,7 +213,8 @@ FlowAllocationListener, FlowDeallocationListener {
 			if (event.getPortId() > 0){
 				try{
 					flow = rina.getIpcManager().commitPendingFlow(event.getSequenceNumber(), 
-							event.getPortId(), event.getDIFName());
+							event.getPortId(), event.getDifName());
+//					event.getPortId(), event.getDIFName());
 				}catch(Exception ex){
 					log.error(ex.getMessage());
 					System.exit(-1);
@@ -206,13 +225,23 @@ FlowAllocationListener, FlowDeallocationListener {
 				byte[] buffer = null;
 				int bytesRead = 0;
 				try{
-					ObjectValue objectValue = new ObjectValue();
-					objectValue.setByteval(EchoTestMessageEncoder.encode(this.testInformation));
+// New mapping is to a SerializedObject class first					
+//					ObjectValue objectValue = new ObjectValue();
+//					CDAPMessage cdapMessage = CDAPMessage.getStartObjectRequestMessage(
+//							null, null, TEST_OBJECT_CLASS, objectValue, 0, TEST_OBJECT_NAME, 0);
+					//objectValue.setByteval(EchoTestMessageEncoder.encode(this.testInformation));
+					byte[] objectValue = EchoTestMessageEncoder.encode(this.testInformation);
 					CDAPMessage cdapMessage = CDAPMessage.getStartObjectRequestMessage(
-							null, null, TEST_OBJECT_CLASS, objectValue, 0, TEST_OBJECT_NAME, 0);
-					cdapMessage.setInvokeID(1);
-					buffer = this.cdapSessionManager.encodeCDAPMessage(cdapMessage);
-					flow.writeSDU(buffer, buffer.length);
+							null, null, TEST_OBJECT_CLASS, 0, TEST_OBJECT_NAME, 0);
+					cdapMessage.setInvoke_id_(1);
+					cdapMessage.setObj_value_(new ByteArrayObjectValue(new SerializedObject(objectValue, objectValue.length)));
+					//buffer = this.cdapSessionManager.encodeCDAPMessage(cdapMessage);
+					// New mapping specifies a SerializedObject
+					SerializedObject sendsdu = this.cdapSessionManager.encodeCDAPMessage(cdapMessage);
+					// End buffer encoding logic
+					
+					//flow.writeSDU(buffer, buffer.length);
+					flow.writeSDU(sendsdu.get_message(), sendsdu.get_size());
 					log.info("Requested echo server to start a test with the following parameters: \n" 
 							+ testInformation.toString());
 					
@@ -222,14 +251,21 @@ FlowAllocationListener, FlowDeallocationListener {
 					buffer = new byte[MAX_SDU_SIZE];
 					bytesRead = flow.readSDU(buffer, buffer.length);
 					timerTask.cancel();
+					
+					/*
 					byte[] sdu = new byte[bytesRead];
 					for(int i=0; i<sdu.length; i++) {
 						sdu[i] = buffer[i];
 					}
 					cdapMessage = cdapSessionManager.decodeCDAPMessage(sdu);
-					if (cdapMessage.getOpCode() != Opcode.M_START_R) {
-						throw new Exception("Received wrong CDAP message code: "+cdapMessage.getOpCode());
-					} else if (cdapMessage.getResult() != 0) {
+					*/
+					// Wrap in a SerializedObject instead using the bytes read
+					SerializedObject recievedsdu = new SerializedObject(buffer, bytesRead);
+					
+					cdapMessage = cdapSessionManager.decodeCDAPMessage(recievedsdu);
+					if (cdapMessage.getOp_code_() != Opcode.M_START_R) {
+						throw new Exception("Received wrong CDAP message code: "+cdapMessage.getOp_code_());
+					} else if (cdapMessage.getResult_() != 0) {
 						throw new Exception("Echo server rejected the test");
 					}
 					
