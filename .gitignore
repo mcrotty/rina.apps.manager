@@ -1,8 +1,11 @@
-*.class
-
-# Package Files #
-build/*.jar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+# vi temporary files
+*~
+# target directory
+target/
+.settings/
+.classpath
+.project
+echo-client
+echo-server
+src/main/resources/log4j.properties
 /bin/

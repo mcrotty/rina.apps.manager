@@ -6,22 +6,15 @@ import java.util.Timer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-
-//import rina.cdap.api.CDAPSessionManager;
-//import rina.cdap.api.message.CDAPMessage;
-//import rina.cdap.api.message.ObjectValue;
-//import rina.cdap.api.message.CDAPMessage.Opcode;
+import rina.cdap.api.CDAPSessionManager;
+import rina.cdap.api.message.CDAPMessage;
+import rina.cdap.api.message.ObjectValue;
+import rina.cdap.api.message.CDAPMessage.Opcode;
 import rina.utils.apps.echo.TestInformation;
 import rina.utils.apps.echo.protobuf.EchoTestMessageEncoder;
-import eu.irati.librina.ByteArrayObjectValue;
-import eu.irati.librina.CDAPMessage;
-import eu.irati.librina.CDAPMessage.Flags;
-import eu.irati.librina.CDAPMessage.Opcode;
-import eu.irati.librina.CDAPSessionManagerInterface;
+
 import eu.irati.librina.Flow;
-//import eu.irati.librina.FlowDeallocationException;
-import eu.irati.librina.ObjectValueInterface;
-import eu.irati.librina.SerializedObject;
+import eu.irati.librina.FlowDeallocationException;
 import eu.irati.librina.rina;
 
 /**
@@ -44,15 +37,13 @@ public class TestController implements Runnable {
 	private boolean stop;
 	private Timer timer = null;
 	private long latestSDUReceivedTime = 0;
-//	private CDAPSessionManager cdapSessionManager = null;
-	private CDAPSessionManagerInterface cdapSessionManager = null;
+	private CDAPSessionManager cdapSessionManager = null;
 	private TestInformation testInformation = null;
 	
 	private static final Log log = LogFactory.getLog(TestController.class);
 	
 	public TestController(Flow flow, int maxSDUSize, 
-//			CDAPSessionManager cdapSessionManager){
-			CDAPSessionManagerInterface cdapSessionManager){
+			CDAPSessionManager cdapSessionManager){
 		this.flow = flow;
 		this.maxSDUSize =  maxSDUSize;
 		this.cdapSessionManager = cdapSessionManager;
@@ -91,28 +82,23 @@ public class TestController implements Runnable {
 		terminateReader();
 	}
 	
-//	private byte[] getSDU(byte[] buffer, int bytesRead) {
-//		byte[] sdu = new byte[bytesRead];
-//		for(int i=0; i<bytesRead; i++) {
-//			sdu[i] = buffer[i];
-//		}
-//		
-//		return sdu;
-//	}
+	private byte[] getSDU(byte[] buffer, int bytesRead) {
+		byte[] sdu = new byte[bytesRead];
+		for(int i=0; i<bytesRead; i++) {
+			sdu[i] = buffer[i];
+		}
+		
+		return sdu;
+	}
 	
 	private CDAPMessage getCDAPMessage(byte[] buffer,  int bytesRead) throws Exception {
-// mcr: Revised API
-//		byte[] sdu = getSDU(buffer, bytesRead);
-		SerializedObject sdu = new SerializedObject(buffer, bytesRead);
+		byte[] sdu = getSDU(buffer, bytesRead);
 		return cdapSessionManager.decodeCDAPMessage(sdu);
 	}
 	
 	private void sendCDAPMessage(CDAPMessage cdapMessage) throws Exception{
-		// mcr: Revised API
-//		byte[] sdu = cdapSessionManager.encodeCDAPMessage(cdapMessage);
-//		flow.writeSDU(sdu, sdu.length);
-		SerializedObject sdu = cdapSessionManager.encodeCDAPMessage(cdapMessage);
-		flow.writeSDU(sdu.get_message(), sdu.get_size());
+		byte[] sdu = cdapSessionManager.encodeCDAPMessage(cdapMessage);
+		flow.writeSDU(sdu, sdu.length);
 	}
 	
 	private void processSDU(byte[] buffer,  int bytesRead) {
@@ -120,14 +106,11 @@ public class TestController implements Runnable {
 			switch(this.state) {
 			case WAIT_START:
 				CDAPMessage cdapMessage = getCDAPMessage(buffer, bytesRead);
-				// mcr: Revised API
-//				if (cdapMessage.getOpCode().equals(Opcode.M_START)) {
-				if (cdapMessage.getOp_code_().equals(Opcode.M_START)) {
+				if (cdapMessage.getOpCode().equals(Opcode.M_START)) {
 					processStartTestMessage(cdapMessage);
 				} else {
-					// mcr: Revised API
 					log.error("Received CDAP message with wrong opcode while in " 
-							+ state + " state: "+cdapMessage.getOp_code_());
+							+ state + " state: "+cdapMessage.getOpCode());
 				}
 				break;
 			case EXECUTING:
@@ -155,30 +138,18 @@ public class TestController implements Runnable {
 	}
 	
 	private void processStartTestMessage(CDAPMessage cdapMessage) throws Exception {
-		// mcr: Revised API
-		// ObjectValue objectValue = cdapMessage.getObjValue();
-		// if (objectValue == null || objectValue.getByteval() == null){
-		ObjectValueInterface objectValue = cdapMessage.getObj_value_();
-		if (objectValue == null || objectValue.get_value() == null){
+		ObjectValue objectValue = cdapMessage.getObjValue();
+		if (objectValue == null || objectValue.getByteval() == null){
 			log.error("The create message did not contain an object value. Ignoring the message");
 			return;
 		}
 		
-		// mcr: Revised API
-		//this.testInformation = EchoTestMessageEncoder.decode(objectValue.getByteval());
+		this.testInformation = EchoTestMessageEncoder.decode(objectValue.getByteval());
 		
-		// TODO: There may be a problem here. get_value returns the SerializedObject not the message contained in SerializedObject?
-		this.testInformation = EchoTestMessageEncoder.decode(objectValue.get_value());
-		
-		// mcr: Revised API
-//		CDAPMessage replyMessage = cdapMessage.getReplyMessage();
-//		objectValue = new ObjectValue();
-//		objectValue.setByteval(EchoTestMessageEncoder.encode(testInformation));
-//		replyMessage.setObjValue(objectValue);
-		CDAPMessage replyMessage = CDAPMessage.getStartObjectResponseMessage(Flags.NONE_FLAGS, 0, "okay", cdapMessage.getInvoke_id_());
-		byte[] buf = EchoTestMessageEncoder.encode(testInformation);
-		objectValue = new ByteArrayObjectValue(new SerializedObject(buf, buf.length));
-		replyMessage.setObj_value_(objectValue);
+		CDAPMessage replyMessage = cdapMessage.getReplyMessage();
+		objectValue = new ObjectValue();
+		objectValue.setByteval(EchoTestMessageEncoder.encode(testInformation));
+		replyMessage.setObjValue(objectValue);
 		sendCDAPMessage(replyMessage);
 		this.state = State.EXECUTING;
 		log.info("Ready for a test with the following parameters: \n"  
@@ -216,12 +187,11 @@ public class TestController implements Runnable {
 	
 	private void terminateReader() {
 		if (flow.isAllocated()){
-// mcr: revised API, no throw anymore			
-//			try{
+			try{
 				rina.getIpcManager().requestFlowDeallocation(flow.getPortId());
-//			}catch(FlowDeallocationException ex){
-//				ex.printStackTrace();
-//			}
+			}catch(FlowDeallocationException ex){
+				ex.printStackTrace();
+			}
 		}
 		
 		timer.cancel();

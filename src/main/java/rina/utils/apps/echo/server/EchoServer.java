@@ -1,7 +1,6 @@
 package rina.utils.apps.echo.server;
 
 import java.util.Map;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,10 +8,10 @@ import java.util.concurrent.Executors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-//import rina.utils.LogHelper;
-//import rina.cdap.api.CDAPSessionManager;
-//import rina.cdap.impl.CDAPSessionManagerImpl;
-//import rina.cdap.impl.googleprotobuf.GoogleProtocolBufWireMessageProviderFactory;
+import rina.utils.LogHelper;
+import rina.cdap.api.CDAPSessionManager;
+import rina.cdap.impl.CDAPSessionManagerImpl;
+import rina.cdap.impl.googleprotobuf.GoogleProtocolBufWireMessageProviderFactory;
 import rina.utils.apps.echo.utils.ApplicationRegistrationListener;
 import rina.utils.apps.echo.utils.FlowAcceptor;
 import rina.utils.apps.echo.utils.FlowDeallocationListener;
@@ -20,15 +19,12 @@ import rina.utils.apps.echo.utils.IPCEventConsumer;
 import eu.irati.librina.ApplicationProcessNamingInformation;
 import eu.irati.librina.ApplicationRegistrationInformation;
 import eu.irati.librina.ApplicationRegistrationType;
-import eu.irati.librina.CDAPSessionManagerFactory;
-import eu.irati.librina.CDAPSessionManagerInterface;
 import eu.irati.librina.Flow;
 import eu.irati.librina.FlowDeallocatedEvent;
 import eu.irati.librina.FlowRequestEvent;
 import eu.irati.librina.IPCManagerSingleton;
 import eu.irati.librina.RegisterApplicationResponseEvent;
 import eu.irati.librina.UnregisterApplicationResponseEvent;
-import eu.irati.librina.WireMessageProviderFactory;
 import eu.irati.librina.rina;
 
 /**
@@ -60,27 +56,21 @@ public class EchoServer implements FlowAcceptor, ApplicationRegistrationListener
 	/**
 	 * Manages the CDAP sessions to the control AE
 	 */
-	private CDAPSessionManagerInterface cdapSessionManager = null;
+	private CDAPSessionManager cdapSessionManager = null;
 	
 	//private int timeout = 0;
 	
 	public EchoServer(ApplicationProcessNamingInformation echoApNamingInfo){
 		try {
-//			rina.initialize(LogHelper.getLibrinaLogLevel(), 
-//					LogHelper.getLibrinaLogFile());
-			rina.initialize("INFO", "/tmp/echo.server.log");
-			
+			rina.initialize(LogHelper.getLibrinaLogLevel(), 
+					LogHelper.getLibrinaLogFile());
 		} catch(Exception ex){
 			log.error("Problems initializing librina, exiting: "+ex.getMessage());
 			System.exit(-1);
 		}
 		
-		//this.cdapSessionManager = new CDAPSessionManagerImpl(
-		//		new GoogleProtocolBufWireMessageProviderFactory());
-		// mcr: Revised API
-		WireMessageProviderFactory factory = new WireMessageProviderFactory();
-		cdapSessionManager = new CDAPSessionManagerFactory().createCDAPSessionManager(factory, 0);
-		
+		this.cdapSessionManager = new CDAPSessionManagerImpl(
+				new GoogleProtocolBufWireMessageProviderFactory());
 		this.echoApNamingInfo = echoApNamingInfo;
 		this.ongoingTests = new ConcurrentHashMap<Integer, TestController>();
 		ipcEventConsumer = new IPCEventConsumer();
@@ -99,8 +89,7 @@ public class EchoServer implements FlowAcceptor, ApplicationRegistrationListener
 			ApplicationRegistrationInformation appRegInfo = 
 					new ApplicationRegistrationInformation(
 							ApplicationRegistrationType.APPLICATION_REGISTRATION_ANY_DIF);
-			//appRegInfo.setApplicationName(echoApNamingInfo);
-			appRegInfo.setAppName(echoApNamingInfo);
+			appRegInfo.setApplicationName(echoApNamingInfo);
 			rina.getIpcManager().requestApplicationRegistration(appRegInfo);
 			log.info("Requested registration of control AE: "+echoApNamingInfo.toString());
 		}catch(Exception ex){
@@ -113,9 +102,7 @@ public class EchoServer implements FlowAcceptor, ApplicationRegistrationListener
 			RegisterApplicationResponseEvent event) {
 		if (event.getResult() == 0) {
 			try {
-//				rina.getIpcManager().commitPendingResitration(
-//						event.getSequenceNumber(), event.getDIFName());
-				rina.getIpcManager().commitPendingRegistration(
+				rina.getIpcManager().commitPendingResitration(
 						event.getSequenceNumber(), event.getDIFName());
 				difName = event.getDIFName();
 				log.info("Succesfully registered AE " + event.getApplicationName().toString() 
