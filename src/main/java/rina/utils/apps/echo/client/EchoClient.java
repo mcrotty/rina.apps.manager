@@ -8,14 +8,16 @@ import java.util.concurrent.Executors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import rina.utils.LogHelper;
+
+
+/*import rina.utils.LogHelper;
 import rina.cdap.api.CDAPSessionManager;
 import rina.cdap.api.message.CDAPMessage;
 import rina.cdap.api.message.CDAPMessage.Opcode;
 import rina.cdap.api.message.ObjectValue;
 import rina.cdap.impl.CDAPSessionManagerImpl;
 import rina.cdap.impl.googleprotobuf.GoogleProtocolBufWireMessageProviderFactory;
-import rina.utils.apps.echo.TestInformation;
+*/import rina.utils.apps.echo.TestInformation;
 import rina.utils.apps.echo.protobuf.EchoTestMessageEncoder;
 import rina.utils.apps.echo.utils.ApplicationRegistrationListener;
 import rina.utils.apps.echo.utils.FlowAllocationListener;
@@ -25,9 +27,13 @@ import eu.irati.librina.AllocateFlowRequestResultEvent;
 import eu.irati.librina.ApplicationProcessNamingInformation;
 import eu.irati.librina.ApplicationRegistrationInformation;
 import eu.irati.librina.ApplicationRegistrationType;
+import eu.irati.librina.CDAPCallbackInterface;
 import eu.irati.librina.Flow;
 import eu.irati.librina.FlowDeallocatedEvent;
 import eu.irati.librina.FlowSpecification;
+import eu.irati.librina.IPCEvent;
+import eu.irati.librina.IPCEventProducerSingleton;
+import eu.irati.librina.IPCEventType;
 import eu.irati.librina.RegisterApplicationResponseEvent;
 import eu.irati.librina.UnregisterApplicationResponseEvent;
 import eu.irati.librina.rina;
@@ -37,8 +43,7 @@ import eu.irati.librina.rina;
  * @author eduardgrasa
  *
  */
-public class EchoClient implements  ApplicationRegistrationListener, 
-FlowAllocationListener, FlowDeallocationListener {
+public class EchoClient extends CDAPCallbackInterface   {
 	
 	public static final int MAX_SDU_SIZE = 10000;
 	public static final String TEST_OBJECT_CLASS = "Echo test";
@@ -84,8 +89,7 @@ FlowAllocationListener, FlowDeallocationListener {
 			ApplicationProcessNamingInformation clientApNamingInfo, 
                           int timeout, int rate, int gap){
 		try {
-			rina.initialize(LogHelper.getLibrinaLogLevel(), 
-					LogHelper.getLibrinaLogFile());
+			rina.initialize("DEBUG", "./app.log");
 		} catch(Exception ex){
 			log.error("Problems initializing librina, exiting: "+ex.getMessage());
 			System.exit(-1);
@@ -106,8 +110,9 @@ FlowAllocationListener, FlowDeallocationListener {
 		testInformation.setTimeout(timeout);
 		testInformation.setRate(rate);
 
-		cdapSessionManager = new CDAPSessionManagerImpl(
-				new GoogleProtocolBufWireMessageProviderFactory());
+		
+		//cdapSessionManager = new CDAPSessionManagerImpl(
+		//		new GoogleProtocolBufWireMessageProviderFactory());
 		
 		timer = new Timer();
 		
@@ -117,13 +122,65 @@ FlowAllocationListener, FlowDeallocationListener {
 		executorService.execute(ipcEventConsumer);
 	}
 	
+	/**
+	 * Register the application with the RINA stack
+	 */
+	protected void applicationRegister() {
+		ApplicationRegistrationInformation ari = new ApplicationRegistrationInformation();
+		
+		ari.setIpcProcessId(0); // This is an application not an IPC process
+		ari.setAppName(new ApplicationProcessNamingInformation(app_name, app_instance));
+		
+		// Was there a dif name given ?
+		if ((dif_name == null) || ("".equals(dif_name))) {
+			ari.setApplicationRegistrationType(ApplicationRegistrationType.APPLICATION_REGISTRATION_ANY_DIF);
+		} else {
+			ari.setApplicationRegistrationType(ApplicationRegistrationType.APPLICATION_REGISTRATION_SINGLE_DIF);
+			ari.setDifName(new ApplicationProcessNamingInformation(dif_name, ""));
+		}
+		
+		// Get access to the IPC Manager
+		long seqnum = rina.getIpcManager().requestApplicationRegistration(ari);
+		
+		
+		// For the moment we follow the blocking style of the example,
+		//
+		// TODO: Fix this into the main event loop.
+		IPCEventProducerSingleton producer =  rina.getIpcEventProducer();
+		IPCEvent event = null;
+		while (true) {
+			event = producer.eventWait();
+			if ((event != null ) 
+			  && (event.getEventType() == IPCEventType.REGISTER_APPLICATION_RESPONSE_EVENT) 
+			  && (event.getSequenceNumber() == seqnum)) {
+			  	// We got the event we are after
+			  	break;
+			}
+		}
+		// End bit to fix, the code below should be in an event handler.
+		
+		RegisterApplicationResponseEvent resp = (RegisterApplicationResponseEvent)event;
+		// Update librina state
+		if (resp.getResult() == 0) {
+			rina.getIpcManager().commitPendingRegistration(seqnum, resp.getDIFName());
+		} else {
+			rina.getIpcManager().withdrawPendingRegistration(seqnum);
+			System.out.println("Failed to register application at DIF:" + resp.getDIFName());
+			System.exit(1);
+			// FIXME Problem with Exceptions are not throwable.
+			//throw new ApplicationRegistrationException("Failed to register application at DIF:" + resp.getDIFName()));
+		}
+	}
+	
+	
 	public void execute(){
 		//0 Register client application (otherwise we cannot use the shim DIF)
 		try{
 			ApplicationRegistrationInformation appRegInfo = 
 					new ApplicationRegistrationInformation(
 							ApplicationRegistrationType.APPLICATION_REGISTRATION_ANY_DIF);
-			appRegInfo.setApplicationName(clientApNamingInfo);
+// v2 change			appRegInfo.setApplicationName(clientApNamingInfo);
+			appRegInfo.setAppName(clientApNamingInfo);
 			rina.getIpcManager().requestApplicationRegistration(appRegInfo);
 			log.info("Requested registration of AE: "+clientApNamingInfo.toString());
 		}catch(Exception ex){
@@ -144,8 +201,10 @@ FlowAllocationListener, FlowDeallocationListener {
 			RegisterApplicationResponseEvent event) {
 		if (event.getResult() == 0) {
 			try {
-				rina.getIpcManager().commitPendingResitration(
+				rina.getIpcManager().commitPendingRegistration(
 						event.getSequenceNumber(), event.getDIFName());
+// v2				rina.getIpcManager().commitPendingResitration(
+//						event.getSequenceNumber(), event.getDIFName());
 				log.info("Succesfully registered AE " + event.getApplicationName().toString() 
 						+ " to DIF" + event.getDIFName().getProcessName());
 				
@@ -195,7 +254,8 @@ FlowAllocationListener, FlowDeallocationListener {
 			if (event.getPortId() > 0){
 				try{
 					flow = rina.getIpcManager().commitPendingFlow(event.getSequenceNumber(), 
-							event.getPortId(), event.getDIFName());
+							event.getPortId(), event.getDifName());
+// v2							event.getPortId(), event.getDIFName());
 				}catch(Exception ex){
 					log.error(ex.getMessage());
 					System.exit(-1);
