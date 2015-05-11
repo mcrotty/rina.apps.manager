@@ -3,6 +3,7 @@
  */
 package rina.utils.apps.echo.client;
 
+
 import eu.irati.librina.AllocateFlowRequestResultEvent;
 import eu.irati.librina.ApplicationProcessNamingInformation;
 import eu.irati.librina.ApplicationRegistrationInformation;
@@ -10,14 +11,13 @@ import eu.irati.librina.ApplicationRegistrationType;
 import eu.irati.librina.CDAPCallbackInterface;
 import eu.irati.librina.CDAPProviderInterface;
 import eu.irati.librina.DeallocateFlowResponseEvent;
-import eu.irati.librina.Flow;
+import eu.irati.librina.FlowInformation;
 import eu.irati.librina.FlowSpecification;
 import eu.irati.librina.IPCEvent;
 import eu.irati.librina.IPCEventProducerSingleton;
 import eu.irati.librina.IPCEventType;
 import eu.irati.librina.IPCManagerSingleton;
 import eu.irati.librina.RegisterApplicationResponseEvent;
-import eu.irati.librina.SerializedObject;
 import eu.irati.librina.auth_info_t;
 import eu.irati.librina.auth_info_t.AuthTypes;
 import eu.irati.librina.con_handle_t;
@@ -28,10 +28,16 @@ import eu.irati.librina.flags_t.Flags;
 import eu.irati.librina.obj_info_t;
 import eu.irati.librina.res_info_t;
 import eu.irati.librina.rina;
+import eu.irati.librina.ser_obj_t;
 import eu.irati.librina.src_info_t;
 import eu.irati.librina.vers_info_t;
 
 /**
+ * 
+ * Latest mods. 
+ * Moved from Flow to FlowInformation
+ * Moved to using ipcManager for reads/writes.
+ * 
  * @author mcrotty@tssg.org
  *
  */
@@ -60,7 +66,7 @@ public class CDAPEchoClient extends CDAPCallbackInterface {
 	
 	// Flow to server
 	// This is only valid after call to createFlow
-	private Flow flow = null;
+	private FlowInformation flow = null;
 	
 	// CDAPProvider
 	// This is only valid after call to cacep
@@ -240,7 +246,7 @@ public class CDAPEchoClient extends CDAPCallbackInterface {
 		IPCManagerSingleton ipcManager = rina.getIpcManager();
 		AllocateFlowRequestResultEvent afrrevent = (AllocateFlowRequestResultEvent) event;
 		
-		Flow f = ipcManager.commitPendingFlow(afrrevent.getSequenceNumber(), afrrevent.getPortId(), afrrevent.getDifName());
+		FlowInformation f = ipcManager.commitPendingFlow(afrrevent.getSequenceNumber(), afrrevent.getPortId(), afrrevent.getDifName());
 		
 		// Set the global flow parameter
 		if ((f != null) && (f.getPortId() != -1)) {
@@ -305,17 +311,18 @@ public class CDAPEchoClient extends CDAPCallbackInterface {
 		ver.setVersion_(1);
 		
 		src_info_t src = new src_info_t();
-		src.setAp_name_(flow.getLocalApplicationName().getProcessName());
-		src.setAp_inst_(flow.getLocalApplicationName().getProcessInstance());
-		src.setAe_name_(flow.getLocalApplicationName().getEntityName());
-		src.setAe_inst_(flow.getLocalApplicationName().getEntityInstance());
+		src.setAp_name_(flow.getLocalAppName().getProcessName());
+		src.setAp_inst_(flow.getLocalAppName().getProcessInstance());
+		src.setAe_name_(flow.getLocalAppName().getEntityName());
+		src.setAe_inst_(flow.getLocalAppName().getEntityInstance());
 
-		// TODO:  Fix naming typo in getRemoteApplicationName 
+		
+		// DONE:  Fix naming typo in getRemoteApplicationName 
 		dest_info_t dest = new dest_info_t();
-		dest.setAp_name_(flow.getRemoteApplcationName().getProcessName());
-		dest.setAp_inst_(flow.getRemoteApplcationName().getProcessInstance());
-		dest.setAe_name_(flow.getRemoteApplcationName().getEntityName());
-		dest.setAe_inst_(flow.getRemoteApplcationName().getEntityInstance());
+		dest.setAp_name_(flow.getRemoteAppName().getProcessName());
+		dest.setAp_inst_(flow.getRemoteAppName().getProcessInstance());
+		dest.setAe_name_(flow.getRemoteAppName().getEntityName());
+		dest.setAe_inst_(flow.getRemoteAppName().getEntityInstance());
 		
 		auth_info_t auth = new auth_info_t();
 		auth.setAuth_mech_(AuthTypes.AUTH_NONE);
@@ -327,18 +334,24 @@ public class CDAPEchoClient extends CDAPCallbackInterface {
 		con_handle_t con = provider.open_connection(ver, src, dest, auth, flow.getPortId());
 		
 		byte[] sdu = new byte[2000]; 
-		// TODO: This request blocks waiting on a response. Needs non-blocking call
-		int bytesRead = flow.readSDU(sdu, 2000);
+		IPCManagerSingleton ipcManager = rina.getIpcManager();
 		
-		// TODO: Blocking Problem.
+		// TODO: This request blocks waiting on a response. Needs non-blocking call
+		int bytesRead = ipcManager.readSDU(flow.getPortId(),sdu, 2000);
+		
 		// There is no way to convert the byte array to a string type
-		SerializedObject message = new SerializedObject(); // Use default ctor for now.
+		//SerializedObject message = new SerializedObject(); // Use default ctor for now.
 
+		// Using the newer ser_obj_t
+		ser_obj_t message = new ser_obj_t();
+		message.setMessage_(sdu);
+		message.setSize_(bytesRead);
+		
 		// TODO: blocking problem
 		// C++ code calls to cp.process_message() we have no such call
-		// 
 		//
-		// MAJOR BLOCKER - How to change the above problems without modifying SWIG?
+		provider.process_message(message, flow.getPortId());
+		// End latest fixes
 	}
 
 	
@@ -373,22 +386,21 @@ public class CDAPEchoClient extends CDAPCallbackInterface {
 				filter.setScope_(0);
 				
 				// Send the read
-				provider.remote_read(cdapconnection, obj, flags, filter);
+				provider.remote_read(cdapconnection.getPort_(), obj, flags, filter);
 				System.out.println("CDAP Read request sent");
 				byte[] sdu = new byte[2000]; 
+				IPCManagerSingleton ipcManager = rina.getIpcManager();
 				// TODO: This request blocks waiting on a response. Needs non-blocking call
-				int bytesRead = flow.readSDU(sdu, 2000);
+				int bytesRead = ipcManager.readSDU(flow.getPortId(),sdu, 2000);
 				
-				// TODO: Blocking Problem.
-				// There is no way to convert the byte array to a string type
-				SerializedObject message = new SerializedObject(); // Use default ctor for now.
+				// Using the newer ser_obj_t
+				ser_obj_t message = new ser_obj_t();
+				message.setMessage_(sdu);
+				message.setSize_(bytesRead);
+				
+				// dispatch
+				provider.process_message(message, flow.getPortId());
 
-				// TODO: blocking problem
-				// C++ code calls to cp.process_message() we have no such call
-				// 
-				//
-				// MAJOR BLOCKER - How to change the above problems without modifying SWIG?
-				
 				// Move up the counter
 				count++;
 			}
@@ -404,22 +416,20 @@ public class CDAPEchoClient extends CDAPCallbackInterface {
 		// See if we need to clean up
 		if (cdapconnection != null) {
 			System.out.println("Client sending close_connection");
-			provider.close_connection(cdapconnection);
+			provider.close_connection(cdapconnection.getPort_());
 					
 			System.out.println("Client expecting a close_connection response");
-			byte[] sdu = new byte[2000]; 
-			// TODO: This request blocks waiting on a response. Needs non-blocking call
-			int bytesRead = flow.readSDU(sdu, 2000);
+			byte[] sdu = new byte[2000];
+			IPCManagerSingleton ipcManager = rina.getIpcManager();
+			int bytesRead = ipcManager.readSDU(flow.getPortId(),sdu, 2000);
 			
-			// TODO: Blocking Problem.
-			// There is no way to convert the byte array to a string type
-			SerializedObject message = new SerializedObject(); // Use default ctor for now.
-
-			// TODO: blocking problem
-			// C++ code calls to cp.process_message() we have no such call
-			// 
-			//
-			// MAJOR BLOCKER - How to change the above problems without modifying SWIG?
+			// Using the newer ser_obj_t
+			ser_obj_t message = new ser_obj_t();
+			message.setMessage_(sdu);
+			message.setSize_(bytesRead);
+			
+			// dispatch
+			provider.process_message(message, flow.getPortId());
 			
 			cdapconnection = null;
 			System.out.println("Client: close_connection completed.");				

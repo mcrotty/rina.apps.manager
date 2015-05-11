@@ -9,26 +9,26 @@ import java.util.TimerTask;
  * @author eduardgrasa
  *
  */
-public class TestDeclaredDeadTimerTask extends TimerTask{
-	
-	private FlowReader flowReader = null;
-	private Timer timer = null;
-	
-	public TestDeclaredDeadTimerTask(FlowReader flowReader, Timer timer){
-		this.flowReader = flowReader;
-		this.timer = timer;
-	}
-
-	@Override
-	public void run() {
-		if (this.flowReader.shouldStop()) {
-			this.flowReader.stop();
-		} else {
-			timer.schedule(
-					new TestDeclaredDeadTimerTask(flowReader, timer), 
-					FlowReader.TIMER_PERIOD_IN_MS);
-		}
-
-	}
-
-}
+//public class TestDeclaredDeadTimerTask extends TimerTask{
+//	
+//	private FlowReader flowReader = null;
+//	private Timer timer = null;
+//	
+//	public TestDeclaredDeadTimerTask(FlowReader flowReader, Timer timer){
+//		this.flowReader = flowReader;
+//		this.timer = timer;
+//	}
+//
+//	@Override
+//	public void run() {
+//		if (this.flowReader.shouldStop()) {
+//			this.flowReader.stop();
+//		} else {
+//			timer.schedule(
+//					new TestDeclaredDeadTimerTask(flowReader, timer), 
+//					FlowReader.TIMER_PERIOD_IN_MS);
+//		}
+//
+//	}
+//
+//}

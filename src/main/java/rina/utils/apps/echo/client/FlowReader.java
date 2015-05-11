@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import rina.utils.apps.echo.TestInformation;
 import rina.utils.apps.echo.utils.FlowDeallocationListener;
 
-import eu.irati.librina.Flow;
+//import eu.irati.librina.Flow;
 import eu.irati.librina.FlowDeallocatedEvent;
 import eu.irati.librina.FlowDeallocationException;
 import eu.irati.librina.rina;
@@ -18,7 +18,7 @@ import eu.irati.librina.rina;
 /**
  * Reads sdus from a flow
  * @author eduardgrasa
- */
+ *
 public class FlowReader implements Runnable, FlowDeallocationListener{
 	
 	public static final long TIMER_PERIOD_IN_MS = 1000;
@@ -159,3 +159,4 @@ public class FlowReader implements Runnable, FlowDeallocationListener{
 	}
 	
 }
+*/

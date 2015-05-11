@@ -1,13 +1,13 @@
 package rina.utils.apps.echo.protobuf;
 
-import rina.utils.apps.echo.TestInformation;
-import rina.utils.apps.echo.protobuf.EchoTestMessage.Echo_test_t;
+//import rina.utils.apps.echo.TestInformation;
+//import rina.utils.apps.echo.protobuf.EchoTestMessage.Echo_test_t;
 
 /**
  * Encodes and decodes RINABand Test messages
  * @author eduardgrasa
  *
- */
+ *
 public class EchoTestMessageEncoder {
 
 	public static TestInformation decode(byte[] encodedObject) throws Exception {
@@ -30,4 +30,4 @@ public class EchoTestMessageEncoder {
 
 		return gpbEchoTest.toByteArray();
 	}
-}
+} */
