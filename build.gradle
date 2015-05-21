@@ -4,7 +4,7 @@ apply plugin: 'eclipse'
 
 sourceCompatibility = 1.7
 
-mainClassName = 'rina.utils.apps.echo'
+mainClassName = 'rina.utils.apps.echo.Main'
 
 repositories {
   mavenCentral();
