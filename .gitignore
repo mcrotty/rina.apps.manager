@@ -1,11 +1,17 @@
 # vi temporary files
 *~
-# target directory
-target/
+# Eclipse 
+bin/
 .settings/
 .classpath
 .project
+# gradle
+.gradle
+build/
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# project files
 echo-client
 echo-server
-src/main/resources/log4j.properties
-/bin/
+
