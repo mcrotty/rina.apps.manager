@@ -1,11 +1,48 @@
 = rina.utils.apps.echo
 
-RINA expiremental java bindings.
+RINA experimental java bindings tester.
 
 
-== Build instructions
+
+== Install instructions
+
+. Install Java (if not available)
 
 . Install google-protobuf
+
 . Install google-protobuf java runtime
-. Run gradlew build
+
+
+
+== Building instructions
+
+. Run in the project root:
+
+[source]
+----
+./gradlew build
+----
+
+This will download the correct version of gradle, and install dependencies.
+
+
+== Packaging instructions.
+
+To package the application for installation on another RINA computer.
+
+1. Run: 
+
+[source]
+----
+./gradlew distTar
+
+----
+
+2. And then copy build/distributions/rina.utils.apps.echo.tar to the required machine, and untar.
+
+3. Setup LD_LIBRARY_PATH correctly to include librina.
+
+4. Run the ./bin/rina.utils.apps.echo script.
+
+
 
