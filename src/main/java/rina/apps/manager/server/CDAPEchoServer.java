@@ -1,7 +1,7 @@
 /**
  * 
  */
-package rina.utils.apps.echo.server;
+package rina.apps.manager.server;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

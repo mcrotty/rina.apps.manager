@@ -1,7 +1,7 @@
 /**
  * 
  */
-package rina.utils.apps.echo.client;
+package rina.apps.manager.client;
 
 import eu.irati.librina.ApplicationProcessNamingInformation;
 import eu.irati.librina.ApplicationRegistrationException;

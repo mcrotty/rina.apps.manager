@@ -1,7 +1,7 @@
 /**
  * 
  */
-package rina.utils.apps.echo.server;
+package rina.apps.manager.server;
 
 import eu.irati.librina.ApplicationProcessNamingInformation;
 import eu.irati.librina.ApplicationRegistrationInformation;
@@ -45,6 +45,8 @@ public class BasicServer {
 	// Do what needs to be done.
 	public void execute() {
 
+		rina.initialize("INFO", "");
+		
 		applicationRegister();
 
 		// Main event loop
@@ -81,8 +83,9 @@ public class BasicServer {
 					rina.getIpcManager().commitPendingRegistration(resp.getSequenceNumber(), resp.getDIFName());
 					info("Application registered.");
 				} else {
+					info("CDAP register [status=" + resp.getResult() + "]");
 					rina.getIpcManager().withdrawPendingRegistration(resp.getSequenceNumber());
-					fail("Failed to register application at DIF:" + resp.getDIFName());
+					fail("Failed to register application [" + resp.getApplicationName() + "] at DIF [" + resp.getDIFName() + "]");
 				}
 			} else {
 				warn("Application is already registered. Ignoring");				
@@ -102,9 +105,9 @@ public class BasicServer {
 
 		// Response to flow deallocation sent
 		case DEALLOCATE_FLOW_RESPONSE_EVENT:			
-			DeallocateFlowResponseEvent req = (DeallocateFlowResponseEvent)event;
+			DeallocateFlowResponseEvent dfr = (DeallocateFlowResponseEvent)event;
 			// Update IPC manager of our intentions
-			rina.getIpcManager().flowDeallocationResult(req.getPortId(), (req.getResult()==0) );
+			rina.getIpcManager().flowDeallocationResult(dfr.getPortId(), (dfr.getResult()==0) );
 			break;
 
 		// MA has requested a flow initiation	
@@ -154,6 +157,7 @@ public class BasicServer {
 			ari.setDifName(new ApplicationProcessNamingInformation(dif_name, ""));
 		}
 
+		info("Registering:" + ari.toString());
 		// Get access to the IPC Manager
 		rina.getIpcManager().requestApplicationRegistration(ari);
 
@@ -192,15 +196,6 @@ public class BasicServer {
 	private void fail(String string) {
 		System.err.println("FATAL: " + string);		
 		System.exit(1);
-	}
-
-	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
 	}
 
 }

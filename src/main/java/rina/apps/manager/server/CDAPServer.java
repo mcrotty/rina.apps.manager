@@ -1,7 +1,7 @@
 /**
  * 
  */
-package rina.utils.apps.echo.server;
+package rina.apps.manager.server;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
@@ -53,8 +53,8 @@ public class CDAPServer extends BasicServer {
 		// Register it
 		CDAPConnection c = connections.put(new Integer(info.getPortId()),connection);
 		if (c != null) {
-			err("Duplicate Flow [port_id = " + info.getPortId() + "], leaving exsisting connection intact.");
-			// Repair, old connection
+			err("Duplicate Flow [port_id = " + info.getPortId() + "], leaving existing connection intact.");
+			// Repair, old connection info
 			connections.put(new Integer(info.getPortId()),c); 
 		} else {
 			info("(there are now " + connections.size() +  " connections active)");

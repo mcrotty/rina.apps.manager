@@ -1,7 +1,7 @@
 /**
  * 
  */
-package rina.utils.apps.echo.client;
+package rina.apps.manager.client;
 
 
 import eu.irati.librina.AllocateFlowRequestResultEvent;

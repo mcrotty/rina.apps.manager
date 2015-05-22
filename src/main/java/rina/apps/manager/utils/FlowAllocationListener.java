@@ -1,4 +1,4 @@
-package rina.utils.apps.echo.utils;
+package rina.apps.manager.utils;
 
 import eu.irati.librina.AllocateFlowRequestResultEvent;
 

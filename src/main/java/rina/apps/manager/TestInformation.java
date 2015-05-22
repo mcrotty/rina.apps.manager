@@ -1,4 +1,4 @@
-package rina.utils.apps.echo;
+package rina.apps.manager;
 
 /**
  * Contains the information for one test

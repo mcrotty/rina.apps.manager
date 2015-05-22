@@ -1,7 +1,9 @@
-package rina.utils.apps.echo;
+package rina.apps.manager;
 
 import java.util.Arrays;
 
+import rina.apps.manager.client.CDAPEchoClient;
+import rina.apps.manager.server.CDAPServer;
 import eu.irati.librina.ApplicationProcessNamingInformation;
 
 /**
@@ -50,6 +52,7 @@ public class Main {
 	
 	public static final String ARGUMENT_SEPARATOR = "-";
 	public static final String ROLE = "role";
+	public static final String DIF = "dif";
 	public static final String SDUSIZE = "sdusize";
 	public static final String COUNT = "count";
 	public static final String SERVER = "server";
@@ -65,20 +68,22 @@ public class Main {
 	public static final int DEFAULT_SDU_SIZE_IN_BYTES = 1500;
 	public static final int DEFAULT_SDU_COUNT = 5000;
 	public static final String DEFAULT_ROLE = SERVER;
-	public static final String DEFAULT_SERVER_AP_NAME = "rina.utils.apps.echo.server";
-	public static final String DEFAULT_CLIENT_AP_NAME = "rina.utils.apps.echo.client";
+	public static final String DEFAULT_DIF = "normal.DIF";
+	public static final String DEFAULT_SERVER_AP_NAME = "rina.apps.cdapecho.server";
+	public static final String DEFAULT_CLIENT_AP_NAME = "rina.apps.cdapecho.client";
 	public static final String DEFAULT_AP_INSTANCE = "1";
 	public static final int DEFAULT_TIMEOUT_IN_MS = 2000;
     public static final int DEFAULT_RATE_IN_MBPS = 1000;
     public static final int DEFAULT_MAX_ALLOWABLE_GAP_IN_SDUS = -1;
 	
 	public static final String USAGE = "java -jar rina.utils.apps.echo [-role] (client|server)" +
+			"[-dif] difName " + 
 			"[-sapname] serverApName [-sinstance] serverApInstance [-capname] clientApName " + 
 			"[-cinstance] clientApInstance [-sdusize] sduSizeInBytes [-count] num_sdus " +
                         "[-timeout] timeout_in_milliseconds [-rate] rate_in_mbps " + 
 			            "[-gap] max_allowable_gap_in_sdus";
-	public static final String DEFAULTS = "The defaults are: role=server;  sapname=rina.utils.apps.echo.server; " + 
-			"sinstance=1; capname=rina.utils.apps.echo.client; cinstance=1; sdusize=1500; count=5000; timeout=2000; rate=1000; gap=-1";
+	public static final String DEFAULTS = "The defaults are: role=" + DEFAULT_ROLE +";  dif="+ DEFAULT_DIF + ";  sapname="+ DEFAULT_SERVER_AP_NAME + "; " + 
+			"sinstance=" + DEFAULT_AP_INSTANCE +"; capname=rina.utils.apps.echo.client; cinstance=1; sdusize=1500; count=5000; timeout=2000; rate=1000; gap=-1";
 	
 	public static void main(String[] args){
 		System.out.println(Arrays.toString(args));
@@ -86,6 +91,7 @@ public class Main {
 		int sduSizeInBytes = DEFAULT_SDU_SIZE_IN_BYTES;
 		int sduCount = DEFAULT_SDU_COUNT;
 		boolean server = false;
+		String difName = DEFAULT_DIF;
 		String serverApName = DEFAULT_SERVER_AP_NAME;
 		String clientApName = DEFAULT_CLIENT_AP_NAME;
 		String serverApInstance = DEFAULT_AP_INSTANCE;
@@ -104,6 +110,8 @@ public class Main {
 				}else{
 					showErrorAndExit(ROLE);
 				}
+			}else if (args[i].equals(ARGUMENT_SEPARATOR + DIF)){
+				difName = args[i+1];
 			}else if (args[i].equals(ARGUMENT_SEPARATOR + SAPNAME)){
 				serverApName = args[i+1];
 			}else if (args[i].equals(ARGUMENT_SEPARATOR + SAPINSTANCE)){
@@ -168,12 +176,23 @@ public class Main {
 		
 		ApplicationProcessNamingInformation serverAPNamingInfo = 
 				new ApplicationProcessNamingInformation(serverApName, serverApInstance);
-		ApplicationProcessNamingInformation clientApNamingInfo = 
+		ApplicationProcessNamingInformation clientAPNamingInfo = 
 				new ApplicationProcessNamingInformation(clientApName, clientApInstance);
 		
-		Echo echo = new Echo(server, serverAPNamingInfo, clientApNamingInfo, sduCount, 
-                                     sduSizeInBytes, timeout, rate, gap);
-		echo.execute();
+		
+		// Create server or client
+//		if (server){
+			System.err.println("Starting server ..");
+			CDAPServer echoServer = new CDAPServer(difName, serverAPNamingInfo);
+			echoServer.execute();
+//		}else{
+			//echoClient = new EchoClient(numberOfSDUs, sduSize, serverNamingInfo, clientNamingInfo, timeout, rate, gap);
+			//boolean q, long count, boolean registration, int w, int g, int dw)
+
+//			CDAPEchoClient echoClient = new CDAPEchoClient(difName, serverAPNamingInfo, clientAPNamingInfo, false, sduCount, true, timeout, gap, 1);
+//			echoClient.execute();
+//		}
+	
 	}
 	
 	public static void showErrorAndExit(String parameterName){

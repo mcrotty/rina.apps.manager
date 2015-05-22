@@ -1,4 +1,4 @@
-package rina.utils.apps.echo.utils;
+package rina.apps.manager.utils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

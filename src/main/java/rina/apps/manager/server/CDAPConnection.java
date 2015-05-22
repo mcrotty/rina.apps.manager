@@ -1,7 +1,7 @@
 /**
- * 
+ * Some licence
  */
-package rina.utils.apps.echo.server;
+package rina.apps.manager.server;
 
 import eu.irati.librina.CDAPCallbackInterface;
 import eu.irati.librina.CDAPProviderInterface;
