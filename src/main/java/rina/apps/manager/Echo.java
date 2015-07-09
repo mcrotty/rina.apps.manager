@@ -17,7 +17,7 @@ public class Echo{
 			ApplicationProcessNamingInformation clientNamingInfo, int numberOfSDUs, int sduSize, 
                     int timeout, int rate, int gap){
 		if (server){
-			echoServer = new CDAPServer("", serverNamingInfo);
+			echoServer = new CDAPServer("", serverNamingInfo, timeout);
 		}else{
 			//echoClient = new EchoClient(numberOfSDUs, sduSize, serverNamingInfo, clientNamingInfo, timeout, rate, gap);
 			//boolean q, long count, boolean registration, int w, int g, int dw)

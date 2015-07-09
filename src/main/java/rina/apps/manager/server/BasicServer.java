@@ -33,6 +33,9 @@ public class BasicServer {
 	// Sanity checks
 	private boolean registered = false;
 	
+	// How long to wait for an event before looping
+	public static int TICK_TIME = 1;
+	
 	/**
 	 * Create a new Flow server
 	 */
@@ -54,13 +57,13 @@ public class BasicServer {
 		IPCEvent event = null;
 		while (keep_running) {
 			// Block for at most a second.
-			event = producer.eventTimedWait(1, 0);
+			event = producer.eventTimedWait(TICK_TIME, 0);
 			if (event != null) {
 				processEvent(event);
 			}
 
 			// Process non RINA events.
-			// TODO: Add more here
+			tick();
 		}
 		
 		// TODO: Fix application unregistering.
@@ -176,6 +179,11 @@ public class BasicServer {
 		// TODO Add specific mechanisms 	
 	}
 
+
+	protected void tick() {
+		// TODO Add specific mechanisms
+		
+	}
 
 	/*
 	 * Handy logging functions

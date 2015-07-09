@@ -18,8 +18,7 @@ import eu.irati.librina.IPCEventProducerSingleton;
 import eu.irati.librina.IPCEventType;
 import eu.irati.librina.IPCManagerSingleton;
 import eu.irati.librina.RegisterApplicationResponseEvent;
-import eu.irati.librina.auth_info_t;
-import eu.irati.librina.auth_info_t.AuthTypes;
+import eu.irati.librina.auth_policy_t;
 import eu.irati.librina.con_handle_t;
 import eu.irati.librina.dest_info_t;
 import eu.irati.librina.filt_info_t;
@@ -324,8 +323,8 @@ public class CDAPEchoClient extends CDAPCallbackInterface {
 		dest.setAe_name_(flow.getRemoteAppName().getEntityName());
 		dest.setAe_inst_(flow.getRemoteAppName().getEntityInstance());
 		
-		auth_info_t auth = new auth_info_t();
-		auth.setAuth_mech_(AuthTypes.AUTH_NONE);
+		auth_policy_t auth = new auth_policy_t();
+		//auth.setAuth_mech_(Type.AUTH_NONE);
 		
 		// Create new CDAP provider
 		provider = rina.create(false, this);
