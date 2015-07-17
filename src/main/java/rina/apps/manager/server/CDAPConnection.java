@@ -1,7 +1,10 @@
 /**
- * Some licence
+ * Micheal Crotty, Pristine.
+ * Copyright (c) 2015, Waterford Institute of Technology.
  */
 package rina.apps.manager.server;
+
+import java.io.UnsupportedEncodingException;
 
 import eu.irati.librina.CDAPCallbackInterface;
 import eu.irati.librina.CDAPProviderInterface;
@@ -17,7 +20,7 @@ import eu.irati.librina.ser_obj_t;
 /**
  * This class captures the responses from the CDAP connection.
  * 
- * @author mcrotty
+ * @author mcrotty@tssg.org
  *
  */
 public class CDAPConnection extends CDAPCallbackInterface implements Runnable {
@@ -29,11 +32,13 @@ public class CDAPConnection extends CDAPCallbackInterface implements Runnable {
 	private int port_id = -1;
 	
 	// Max buffer size
-	private int max_sdu_size_in_bytes = 2000;
+	private int max_sdu_size_in_bytes = 4048;
 
+	
 	// Allow the loop to be terminated.
 	private boolean keep_running = true;
 	
+	private con_handle_t con_handle = null;
 	
 	/**
 	 * Create a CDAP connection from an accepted flow
@@ -58,6 +63,7 @@ public class CDAPConnection extends CDAPCallbackInterface implements Runnable {
 	@Override
 	public void run() {
 		
+		rina.init(2000);
 		provider = rina.create(false, this);
 		if (provider == null) {
 			err("CDAP: No CDAP provider created.");
@@ -68,14 +74,30 @@ public class CDAPConnection extends CDAPCallbackInterface implements Runnable {
 		}
 		
 		byte[] sdu = new byte[max_sdu_size_in_bytes];
+		//ByteBuffer sdu = ByteBuffer.allocate(max_sdu_size_in_bytes);
+		
 		IPCManagerSingleton ipc = rina.getIpcManager();
 		
 		while (keep_running) {
 		    int bytesRead = ipc.readSDU(port_id, sdu, max_sdu_size_in_bytes);
+		    //int bytesRead = ipc.readSDU(port_id, sdu.array(), sdu.limit());
+		    //sdu.limit(bytesRead);
 		    
+		    info("Read " + bytesRead + " bytes into the sdu buffer");
+		    
+		    
+			// Debug, dump the buffer
+			int width = 16;
+			for (int index = 0; index < bytesRead; index += width) {
+				printHex(sdu, index, width);
+				printAscii(sdu, index, width);
+			}				
+			
 			ser_obj_t message = new ser_obj_t();
 			message.setMessage_(sdu);
 			message.setSize_(bytesRead);
+				    		    		
+			info("Calling process message");
 			// Ask CDAP Processor to process the message
 			provider.process_message(message, port_id);		    
 		}
@@ -88,12 +110,22 @@ public class CDAPConnection extends CDAPCallbackInterface implements Runnable {
 	}
 	
 	
+	/**
+	 * @return the con_handle
+	 */
+	public con_handle_t getCon_handle() {
+		return con_handle;
+	}
+
+
 	@Override
 	public void open_connection(con_handle_t con, flags_t flags, int message_id) {
 		// TODO Auto-generated method stub
 		res_info_t	res = new res_info_t();
 		res.setResult_(1);
 		res.setResult_reason_("OK");
+		
+		con_handle= con;
 		
 		info("Open connection requested.");
 		provider.open_connection_response(con, res, message_id);
@@ -129,5 +161,37 @@ public class CDAPConnection extends CDAPCallbackInterface implements Runnable {
 	}
 
 
+	/**
+	 * 
+	 * Extra debugging functions
+	 * 
+	 */
 	
+	private static void printHex(byte[] bytes, int offset, int width) {
+		for (int index = 0; index < width; index++) {
+			if (index + offset < bytes.length) {
+				System.out.printf("%02x ", bytes[index + offset]);
+			} else {
+				System.out.print("	");
+			}
+		}
+	}
+
+	private static void printAscii(byte[] bytes, int index, int width) {
+		if (index < bytes.length) {
+			width = Math.min(width, bytes.length - index);
+			try {
+				System.out.println(
+					":"
+						+ new String(bytes, index, width, "UTF-8").replaceAll("\r\n", " ").replaceAll(
+							"\n",
+							" "));
+			} catch (UnsupportedEncodingException e) {
+				System.out.println(": <illegal chars>");
+			}
+		} else {
+			System.out.println();
+		}
+	}
+
 }

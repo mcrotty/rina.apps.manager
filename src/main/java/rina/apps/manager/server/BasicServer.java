@@ -1,5 +1,6 @@
 /**
- * 
+ * Micheal Crotty, Pristine.
+ * Copyright (c) 2015, Waterford Institute of Technology.
  */
 package rina.apps.manager.server;
 
@@ -26,6 +27,7 @@ public class BasicServer {
 	// DIF to register at
 	private String dif_name = null;
 	private ApplicationProcessNamingInformation local_ani = null;
+	private String loggingLevel = "INFO";
 
 	// Flag to indicate orderly shutdown
 	private boolean keep_running = true;
@@ -34,21 +36,23 @@ public class BasicServer {
 	private boolean registered = false;
 	
 	// How long to wait for an event before looping
-	public static int TICK_TIME = 1;
+	public static int TICK_TIME = 1000;
 	
 	/**
 	 * Create a new Flow server
 	 */
 	public BasicServer(String difName,
-			ApplicationProcessNamingInformation serverAni) {
+			ApplicationProcessNamingInformation serverAni,
+			String logging) {
 		this.dif_name = difName;
 		this.local_ani = serverAni;
+		this.loggingLevel = logging;
 	}
 
 	// Do what needs to be done.
 	public void execute() {
 
-		rina.initialize("INFO", "");
+		rina.initialize(loggingLevel, "manager.log");
 		
 		applicationRegister();
 
@@ -75,6 +79,7 @@ public class BasicServer {
 	 * @param event
 	 */
 	protected void processEvent(IPCEvent event) {
+		
 		// Depending of the event
 		switch (event.getEventType()) {
 

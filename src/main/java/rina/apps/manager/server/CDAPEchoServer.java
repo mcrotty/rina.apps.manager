@@ -1,5 +1,6 @@
 /**
- * 
+ * Micheal Crotty, Pristine.
+ * Copyright (c) 2015, Waterford Institute of Technology.
  */
 package rina.apps.manager.server;
 
@@ -11,6 +12,8 @@ import eu.irati.librina.FlowDeallocatedEvent;
 import eu.irati.librina.FlowRequestEvent;
 
 /**
+ * Just another example of a server.
+ * 
  * @author mcrotty
  *
  */
@@ -26,7 +29,7 @@ public class CDAPEchoServer extends BasicServer {
 	 */
 	public CDAPEchoServer(String difName,
 			ApplicationProcessNamingInformation serverAni) {
-		super(difName, serverAni);
+		super(difName, serverAni, "INFO");
 		
 		warn("Not implemented fully");
 		// TODO 
@@ -46,13 +49,6 @@ public class CDAPEchoServer extends BasicServer {
 	protected void destroyFlow(FlowDeallocatedEvent fde) {
 		// TODO Auto-generated method stub
 		super.destroyFlow(fde);
-	}
-	
-	
-	
-	
-	
-	
-	
+	}	
 
 }
