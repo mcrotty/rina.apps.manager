@@ -41,8 +41,8 @@ public class CDAPServer extends BasicServer {
 	// Pool of concurrent CDAP connections.
 	private HashMap<Integer, CDAPConnection> connections = new HashMap<Integer, CDAPConnection>();
 
-	// Length to wait before initiating CDAP messages
-	private int wait = 20000;
+	// Length to wait before initiating CDAP messages (in secs)
+	private int wait = 20;
 
 	private int message_id = 8000;
 
@@ -107,8 +107,9 @@ public class CDAPServer extends BasicServer {
 
 		// Have we a connection
 		if (!connections.isEmpty()) {
-			wait = wait - (TICK_TIME * 1000);
+			wait = wait - (TICK_TIME);
 			if (wait < 1) {
+				info("Attempting a CDAP operation");
 				// Start doing it.
 				Iterator<CDAPConnection> i = connections.values().iterator();
 				CDAPConnection c = i.next();
