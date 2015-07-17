@@ -27,7 +27,7 @@ public class BasicServer {
 	// DIF to register at
 	private String dif_name = null;
 	private ApplicationProcessNamingInformation local_ani = null;
-	private String loggingLevel = "INFO";
+	private String loggingLevel = "";
 
 	// Flag to indicate orderly shutdown
 	private boolean keep_running = true;
@@ -35,8 +35,8 @@ public class BasicServer {
 	// Sanity checks
 	private boolean registered = false;
 	
-	// How long to wait for an event before looping
-	public static int TICK_TIME = 1000;
+	// How long to wait for an event before looping (in secs)
+	public static int TICK_TIME = 1;
 	
 	/**
 	 * Create a new Flow server
