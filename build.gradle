@@ -48,6 +48,7 @@ dependencies {
     compile 'com.google.protobuf:protobuf-java:2.5.+'
     compile 'commons-logging:commons-logging:1.2'
     compile name: 'librina'
+    compile 'net.sf.jopt-simple:jopt-simple:4.9'
     
     testCompile group: 'junit', name: 'junit', version: 'latest.release'
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: 'latest.release'
