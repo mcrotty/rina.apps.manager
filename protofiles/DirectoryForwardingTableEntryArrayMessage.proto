@@ -1,5 +1,5 @@
 package rina.messages;
-option optimize_for = LITE_RUNTIME;
+//option optimize_for = LITE_RUNTIME;
 import "DirectoryForwardingTableEntryMessage.proto";
 
 message directoryForwardingTableEntrySet_t{   //carries information about directoryforwardingtable entries

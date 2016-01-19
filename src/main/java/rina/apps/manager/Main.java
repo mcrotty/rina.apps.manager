@@ -23,14 +23,16 @@ public class Main {
 
 	static {
 		System.loadLibrary("rina_java");
+		System.loadLibrary("rina");
 	}
 	
 	// Default argument values
-	public static final String DEFAULT_DIF = "NMS.DIF";
-	public static final String DEFAULT_AP_NAME = "rina.apps.manager";
-	public static final String DEFAULT_AP_INST = "1";
-	public static final String DEFAULT_LEVEL = "DEBUG";
-	public static final Integer DEFAULT_WAIT = 1000;
+	public static final String  DEFAULT_DIF = "NMS.DIF";
+	public static final String  DEFAULT_AP_NAME = "rina.apps.manager";
+	public static final String  DEFAULT_AP_INST = "1";
+	public static final String  DEFAULT_LEVEL = "DEBUG";
+	public static final Integer DEFAULT_WAIT = 10;
+	public static final String  DEFAULT_WS = "ws://localhost:8887";
 	
 	/**
 	 * @param args
@@ -42,27 +44,29 @@ public class Main {
         parser.accepts( "manager-apn" ).withRequiredArg().ofType( String.class );
         parser.accepts( "manager-api" ).withRequiredArg().ofType( String.class );	
         parser.accepts( "dif" ).withRequiredArg().ofType( String.class );
-        parser.accepts( "wait" ).withRequiredArg().ofType( Integer.class );
-        parser.accepts( "l" ).withOptionalArg().ofType( String.class );	
+        parser.accepts( "wait", "Time to wait before attempting CDAP operaitons" ).withRequiredArg().ofType( Integer.class );
+        parser.accepts( "l", "Logging level" ).withOptionalArg().ofType( String.class );	
+        parser.accepts( "ws", "WS connection URI" ).withOptionalArg().ofType( String.class );
         parser.accepts( "help" );	
-
+        
         // Parse the command line.
         OptionSet options = parser.parse(args);
         
         // Use the options if set
-		String difName = options.hasArgument("dif")?(String)options.valueOf("dif") : DEFAULT_DIF;
-		String serverApName = options.hasArgument("manager-apn")?(String)options.valueOf("manager-apn") : DEFAULT_AP_NAME;
-		String serverApInstance = options.hasArgument("manager-api")?(String)options.valueOf("manager-api") : DEFAULT_AP_INST;
-        Integer wait = options.hasArgument("wait")?(Integer)options.valueOf("wait") : DEFAULT_WAIT;
-        String level = options.hasArgument("l")?(String)options.valueOf("l") : DEFAULT_LEVEL;
+		String difName = options.has("dif")?(String)options.valueOf("dif") : DEFAULT_DIF;
+		String serverApName = options.has("manager-apn")?(String)options.valueOf("manager-apn") : DEFAULT_AP_NAME;
+		String serverApInstance = options.has("manager-api")?(String)options.valueOf("manager-api") : DEFAULT_AP_INST;
+        Integer wait = options.has("wait")?(Integer)options.valueOf("wait") : DEFAULT_WAIT;
+        String level = options.has("l")?(String)options.valueOf("l") : DEFAULT_LEVEL;
+        String ws = options.has("ws")?DEFAULT_WS : null;
         
-        if (!options.hasArgument("help")) {
+        if (!options.has("help")) {
 	        // Set application name
 			ApplicationProcessNamingInformation serverAPNamingInfo = 
 					new ApplicationProcessNamingInformation(serverApName, serverApInstance);
 	
 			System.out.println("Starting server ..");
-			CDAPServer echoServer = new CDAPServer(difName, serverAPNamingInfo, wait, level);
+			CDAPServer echoServer = new CDAPServer(difName, serverAPNamingInfo, wait, ws, level);
 			echoServer.execute();
         } else {    
 			System.out.println("Additional help:");
