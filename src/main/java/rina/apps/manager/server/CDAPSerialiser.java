@@ -7,11 +7,15 @@ package rina.apps.manager.server;
 import java.io.UnsupportedEncodingException;
 
 import rina.messages.CDAP.CDAPMessage;
+import rina.messages.CDAP.objVal_t;
 import rina.messages.CDAP.opCode_t;
 import rina.messages.MAIPCP;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.googlecode.protobuf.format.JsonFormat;
 import com.googlecode.protobuf.format.JsonFormat.ParseException;
 
@@ -74,7 +78,7 @@ public class CDAPSerialiser {
 		try {
 			CDAPMessage.Builder builder = CDAPMessage.newBuilder();
 			JsonFormat.merge(b, builder);
-			//message = builder.build(); 
+			//message = builder.build();
 			message = builder; 
 		    //validate(message);
 		} catch (ParseException e) {
@@ -83,6 +87,28 @@ public class CDAPSerialiser {
 			System.err.println(b);
 		}
 		return message;
+	}
+
+	/**
+	 * Decode JSON value into byte array.
+	 * @param json  The JSON 
+	 * @param type  The underlying json type
+	 * @return A Builder
+	 */
+	public static objVal_t.Builder decodeJSONValue(String json, String type) {
+	    objVal_t.Builder value = objVal_t.newBuilder();
+		try {
+			Descriptor d = null; // something?
+			MAIPCP.ipcp_config_t.Builder builder = MAIPCP.ipcp_config_t.newBuilder();
+			JsonFormat.merge(json, builder);			
+			value.setByteval(builder.build().toByteString()); 
+		    //validate(message);
+		} catch (ParseException e) {
+			e.printStackTrace();
+			// Dump the buffer
+			System.err.println(json);
+		}
+		return value;
 	}
 	
 	/**
@@ -164,6 +190,7 @@ public class CDAPSerialiser {
 		System.out.println("INFO:" + s);
 	}
 
+	
 	/**
 	 * 
 	 * Extra debugging functions

@@ -259,6 +259,12 @@ public class CDAPConnectionJava implements Runnable, CDAPConnection {
 		    //builder.setDestAEName(new String("v") + version);
 		    builder.setDestAEInst(remote.getEntityInstance());
 		}
+		// Type conversion
+		if (builder.hasObjValue() && builder.getObjValue().hasJsonval()) {
+			objVal_t value = builder.getObjValue();
+			objVal_t.Builder newvalue = CDAPSerialiser.decodeJSONValue(value.getJsonval(), value.getTypeval());
+			builder.setObjValue(newvalue);
+		}
 		
 		info("Message to MA [" + remote.getProcessName()+ ":" + remote.getProcessInstance() + ":" + remote.getEntityName() + ":" + remote.getEntityInstance() + "]");
 		return builder;
@@ -733,10 +739,39 @@ public class CDAPConnectionJava implements Runnable, CDAPConnection {
 		return dif_info;
 	}		
 
-	// Test IPCP
+	// Test IPCP 1
+	public void createIPCP1(int messageId) {
+
+		// Create message
+		CDAPMessage.Builder builder = construct_message(opCode_t.M_CREATE, messageId);
+
+		// JSON version
+		String ipcpJSON = "{\"process_name\": {\"applicationProcessName\": \"normal-1.IPCP)\",\"applicationProcessInstance\": \"1\"},\"dif_to_assign\": {\"dif_type\": \"normal-ipc\",\"dif_name\": {\"applicationProcessName\": \"normal.DIF\"},\"dif_config\": {\"address\": 16,\"efcp_config\": {\"data_transfer_constants\": {\"maxPDUSize\": 10000,\"addressLength\": 2,\"portIdLength\": 2,\"cepIdLength\": 2,\"qosidLength\": 2,\"sequenceNumberLength\": 4,\"lengthLength\": 2,\"maxPDULifetime\": 60000,\"rateLength\": 4,\"frameLength\": 4,\"ctrlSequenceNumberLength\": 4},\"qos_cubes\": [{\"qosId\": 1,\"name\": \"unreliablewithflowcontrol\",\"partialDelivery\": false,\"order\": true,\"dtpConfiguration\": {\"dtcpPresent\": true,\"initialATimer\": 300,\"dtppolicyset\": {\"policyName\": \"default\",\"version\": \"0\"}},\"dtcpConfiguration\": {\"flowControl\": true,\"flowControlConfig\": {\"windowBased\": true,\"windowBasedConfig\": {\"maxclosedwindowqueuelength\": 50,\"initialcredit\": 50},\"rateBased\": false},\"rtxControl\": false,\"dtcppolicyset\": {\"policyName\": \"default\",\"version\": \"0\"}}},{\"qosId\": 2,\"name\": \"reliablewithflowcontrol\",\"partialDelivery\": false,\"order\": true,\"maxAllowableGapSdu\": 0,\"dtpConfiguration\": {\"dtcpPresent\": true,\"initialATimer\": 300,\"dtppolicyset\": {\"policyName\": \"default\",\"version\": \"0\"}},\"dtcpConfiguration\": {\"flowControl\": true,\"flowControlConfig\": {\"windowBased\": true,\"windowBasedConfig\": {\"maxclosedwindowqueuelength\": 50,\"initialcredit\": 50},\"rateBased\": false},\"rtxControl\": false,\"rtxControlConfig\": {\"datarxmsnmax\": 5,\"initialRtxTime\": 1000},\"dtcppolicyset\": {\"policyName\": \"default\",\"version\": \"0\"}}}]},\"rmt_config\": {\"policy_set\": {\"policyName\": \"default\",\"version\": \"1\"},\"pft_conf\": {\"policyName\": \"default\",\"version\": \"0\"}},\"fa_config\": {\"policy_set\": {\"policyName\": \"default\",\"version\": \"1\"}},\"et_config\": {\"policyName\": \"default\",\"version\": \"1\",\"policyParameters\": [{\"name\": \"enrollTimeoutInMs\",\"value\": \"10000\"},{\"name\": \"watchdogPeriodInMs\",\"value\": \"30000\"},{\"name\": \"declaredDeadIntervalInMs\",\"value\": \"120000\"},{\"name\": \"neighborsEnrollerPeriodInMs\",\"value\": \"30000\"},{\"name\": \"maxEnrollmentRetries\",\"value\": \"3\"}]},\"nsm_config\": {\"addressing_config\": {\"address\": [{\"ap_name\": \"test1.IRATI\",\"ap_instance\": \"1\",\"address\": 16},{\"ap_name\": \"test2.IRATI\",\"ap_instance\": \"1\",\"address\": 17}],\"prefixes\": [{\"address_prefix\": 0,\"organization\": \"N.Bourbaki\"},{\"address_prefix\": 16,\"organization\": \"IRATI\"}]},\"policy_set\": {\"policyName\": \"default\",\"version\": \"1\"}},\"routing_config\": {\"policyName\": \"link-state\",\"version\": \"1\",\"policyParameters\": [{\"name\": \"objectMaximumAge\",\"value\": \"10000\"},{\"name\": \"waitUntilReadCDAP\",\"value\": \"5001\"},{\"name\": \"waitUntilError\",\"value\": \"5001\"},{\"name\": \"waitUntilPFUFTComputation\",\"value\": \"103\"},{\"name\": \"waitUntilFSODBPropagation\",\"value\": \"101\"},{\"name\": \"waitUntilAgeIncement\",\"value\": \"997\"}]},\"ra_config\": {\"policyName\": \"default\",\"version\": \"0\"},\"sm_config\": {\"policy_set\": {\"policyName\": \"default\",\"version\": \"1\"}}}}}";	
+		objVal_t.Builder value = CDAPSerialiser.decodeJSONValue(ipcpJSON, "rina.messages.MAIPCP.ipcp_config_t");
+		
+		
+		// Object info
+		builder.setObjName("/computingSystemID=1/processingSystemID=1/kernelApplicationProcess/osApplicationProcess/ipcProcesses/ipcProcessID=5")
+			.setObjInst(0)
+			.setObjClass("IPCProcess")
+			.setObjValue(value);
+		
+		// Scope & Filter
+		byte[] filter = new byte[1];
+		filter[0]=0x00;
+		CDAPMessage request = builder.setFlags(flagValues_t.F_NO_FLAGS)
+				.setScope(0)
+				.setFilter(ByteString.copyFrom(filter))
+				.build();
+		
+		byte[] encMessage = CDAPSerialiser.encodeCDAPMessage(request);
+		send(encMessage);
+		info("CDAP CREATE: IPCP issued");
+	}
+	
+	// Test IPCP 2
 	public void createIPCP2(int messageId) {
 
-		
 		// Create IPCP config
 		applicationProcessNamingInfo_t proc_name = applicationProcessNamingInfo_t.newBuilder()
 				.setApplicationProcessInstance("1")
