@@ -41,8 +41,6 @@ public class CDAPServer extends BasicServer implements ConnectionFinder {
 	// Length to wait before initiating CDAP messages (in secs)
 	private int wait = 20;
 
-	// private int message_id = 8000;
-
 	/**
 	 * @param difName
 	 * @param serverAni
@@ -63,9 +61,6 @@ public class CDAPServer extends BasicServer implements ConnectionFinder {
 				executorService.execute((Runnable) ws);
 			} catch (URISyntaxException e) {
 				warn("Invalid URI: " + e.getLocalizedMessage());
-				// } catch (InterruptedException e) {
-				// warn("Connection attempt interupted: " +
-				// e.getLocalizedMessage());
 			}
 		} else {
 			warn("No ws");
@@ -179,115 +174,9 @@ public class CDAPServer extends BasicServer implements ConnectionFinder {
 	}
 
 	private void cacep(CDAPConnection c) {
-		// Nothing to do here, as the CDAPconnection loop processes incoming
+		// Nothing to do here, as the CDAPconnection's loop processes incoming
 		// messages
 
 	}
-
-	private void readRequest(CDAPConnection c) {
-		// char buffer[max_sdu_size_in_bytes];
-
-		// Object info
-		// obj_info_t obj = new obj_info_t();
-		// obj.setName_("root, computingSystemID = 1, processingSystemID=1, kernelApplicationProcess, osApplicationProcess, ipcProcesses, ipcProcessID=2, RIBDaemon");
-		// obj.setInst_(0);
-		// obj.setClass_("RIBDaemon");
-
-		// flags_t flags = new flags_t();
-		// flags.setFlags_(Flags.NONE_FLAGS);
-		// Set filter and scope
-		// filt_info_t filt = new filt_info_t();
-		// filt.setFilter_(""); // TODO: Check this now.
-		// filt.setScope_(0);
-
-		info("Sending CDAP Read [RIBDaemon]");
-		// c.create_read(18000);
-		info("Sent CDAP Read [RIBDaemon]");
-	}
-
-	// private void createIPCP2(CDAPConnection c) {
-	// // Create IPCP config
-	// ipcp_config_t ipc_config = ipcp_config_t.newBuilder()
-	// .setProcessInstance("1").setProcessName("normal-1.IPCP")
-	// .setProcessType("normal-ipc").setDifToAssign("normal.DIF")
-	// //.setDifToRegister("400")
-	// .build();
-	//
-	// // Object info
-	// obj_info_t obj = new obj_info_t();
-	// obj.setName_("root, computingSystemID = 1, processingSystemID=1, kernelApplicationProcess, osApplicationProcess, ipcProcesses, ipcProcessID=2");
-	// obj.setInst_(0);
-	// obj.setClass_("IPCProcess");
-	//
-	// }
-
-	// private void createIPCP(CDAPConnectionJava c) {
-	//
-	// // Create IPCP config
-	// ipcp_config_t ipc_config = ipcp_config_t.newBuilder()
-	// .setProcessInstance("1").setProcessName("normal-1.IPCP")
-	// .setProcessType("normal-ipc").setDifToAssign("normal.DIF")
-	// .setDifsToRegister(0, "400")
-	// .build();
-	//
-	// // Object info
-	// obj_info_t obj = new obj_info_t();
-	// obj.setName_("root, computingSystemID = 1, processingSystemID=1, kernelApplicationProcess, osApplicationProcess, ipcProcesses, ipcProcessID=2");
-	// obj.setInst_(0);
-	// obj.setClass_("IPCProcess");
-	//
-	// // Debug block
-	// // Test encoding / decoding
-	// try {
-	// byte[] sdu1 = ipc_config.toByteArray();
-	// ipcp_config_t ipc_conf2 = ipcp_config_t.parseFrom(sdu1);
-	// } catch (InvalidProtocolBufferException e) {
-	// err("Decoding own message ... yikes");
-	// e.printStackTrace();
-	// }
-	//
-	// // Set flags
-	// flags_t flags = new flags_t();
-	// flags.setFlags_(Flags.NONE_FLAGS);
-	// // Set filter and scope
-	// filt_info_t filt = new filt_info_t();
-	// filt.setFilter_(""); // TODO: Check this now.
-	// filt.setScope_(0);
-	//
-	// info("create IPC request CDAP message sending");
-	// //c.remote_create_request(c.getCon_handle(), obj, filt, message_id++);
-	//
-	// info("create IPC request CDAP message sent");
-	//
-	// }
-
-	//
-	// private void createIPCP2(CDAPConnectionJava c) {
-	// ipcp_config_t ipc_config = ipcp_config_t.newBuilder()
-	// .setProcessInstance("1").setProcessName("")
-	// .setProcessType("normal-ipc").setDifToAssign("normal.DIF")
-	// //.setDifToRegister("410") // TODO: Fix me
-	// .build();
-	// // Todo: Missing enroll calls e.g.
-	// // .setDifToAssign(EnrConf)
-	//
-	// obj_info_t obj = new obj_info_t();
-	// obj.setName_("");
-	// obj.setClass_("IPCProcess");
-	// obj.setInst_(0);
-	//
-	// // Flags
-	// flags_t flags = new flags_t();
-	// flags.setFlags_(Flags.NONE_FLAGS);
-	// // filter and scope
-	// filt_info_t filt = new filt_info_t();
-	// filt.setFilter_(""); // TODO: Check this now.
-	// filt.setScope_(0);
-	//
-	// info("create IPC request CDAP message2 sending");
-	// //c.remote_create_request(c.getCon_handle(), obj, filt, message_id++);
-	// info("create IPC request CDAP message2 sent");
-	//
-	// }
 
 }

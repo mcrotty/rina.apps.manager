@@ -44,7 +44,7 @@ public class Main {
         parser.accepts( "manager-apn" ).withRequiredArg().ofType( String.class );
         parser.accepts( "manager-api" ).withRequiredArg().ofType( String.class );	
         parser.accepts( "dif" ).withRequiredArg().ofType( String.class );
-        parser.accepts( "wait", "Time to wait before attempting CDAP operaitons" ).withRequiredArg().ofType( Integer.class );
+        parser.accepts( "wait", "Time to wait before attempting some test CDAP operations" ).withRequiredArg().ofType( Integer.class );
         parser.accepts( "l", "Logging level" ).withOptionalArg().ofType( String.class );	
         parser.accepts( "ws", "WS connection URI" ).withOptionalArg().ofType( String.class );
         parser.accepts( "help" );	

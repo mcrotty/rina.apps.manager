@@ -1,8 +1,7 @@
-= rina.utils.apps.echo
+= rina.apps.manager
 
-RINA experimental java bindings tester.
-
-
+RINA experimental CDAP connect java bindings tester.
+It translates native GPB CDAP requests to a JSON CDAP requests and responses, suitable for internal use within the CDAP manager.
 
 == Install instructions
 
@@ -12,9 +11,12 @@ RINA experimental java bindings tester.
 
 . Install google-protobuf java runtime
 
+. Install maven (required by the IRATI stack)
 
 
 == Building instructions
+
+. Build the RINA stack with Java bindings enabled. Complete instructions can be found on the link:http://github.com/IRATI[IRATI repository].
 
 . Run in the project root:
 
@@ -38,11 +40,8 @@ To package the application for installation on another RINA computer.
 
 ----
 
-2. And then copy build/distributions/rina.utils.apps.echo.tar to the required machine, and untar.
+2. And then copy build/distributions/tmanager.tar to the required machine, and untar.
 
 3. Setup LD_LIBRARY_PATH correctly to include librina.
 
-4. Run the ./bin/rina.utils.apps.echo script.
-
-
-
+4. Run the ./bin/tmanager script.
