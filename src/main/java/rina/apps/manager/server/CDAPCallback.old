@@ -1,0 +1,68 @@
+/**
+ * 
+ */
+package rina.apps.manager.server;
+
+import eu.irati.librina.CDAPConnection;
+import eu.irati.librina.filt_info_t;
+import eu.irati.librina.flags_t;
+import eu.irati.librina.obj_info_t;
+import eu.irati.librina.res_info_t;
+
+/**
+ * CDAP Callback Interface non native version
+ *  
+ * @author mcrotty@tssg.org
+ *
+ */
+public interface CDAPCallback {
+
+	public void open_connection_result(CDAPConnection con, res_info_t res);
+
+	public void open_connection(CDAPConnection con, flags_t flags, int message_id);
+
+	public void close_connection_result(CDAPConnection con, res_info_t res);
+
+	public void close_connection(CDAPConnection con, flags_t flags, int message_id);
+
+	public void remote_create_result(CDAPConnection con, obj_info_t obj,
+			res_info_t res);
+
+	public void remote_delete_result(CDAPConnection con, res_info_t res);
+
+	public void remote_read_result(CDAPConnection con, obj_info_t obj,
+			res_info_t res);
+
+	public void remote_cancel_read_result(CDAPConnection con, res_info_t res);
+
+	public void remote_write_result(CDAPConnection con, obj_info_t obj,
+			res_info_t res);
+
+	public void remote_start_result(CDAPConnection con, obj_info_t obj,
+			res_info_t res);
+
+	public void remote_stop_result(CDAPConnection con, obj_info_t obj,
+			res_info_t res);
+
+	public void remote_create_request(CDAPConnection con, obj_info_t obj,
+			filt_info_t filt, int message_id);
+
+	public void remote_delete_request(CDAPConnection con, obj_info_t obj,
+			filt_info_t filt, int message_id);
+
+	public void remote_read_request(CDAPConnection con, obj_info_t obj,
+			filt_info_t filt, int message_id);
+
+	public void remote_cancel_read_request(CDAPConnection con, obj_info_t obj,
+			filt_info_t filt, int message_id);
+
+	public void remote_write_request(CDAPConnection con, obj_info_t obj,
+			filt_info_t filt, int message_id);
+
+	public void remote_start_request(CDAPConnection con, obj_info_t obj,
+			filt_info_t filt, int message_id);
+
+	public void remote_stop_request(CDAPConnection con, obj_info_t obj,
+			filt_info_t filt, int message_id);
+
+}

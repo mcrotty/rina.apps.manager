@@ -21,10 +21,10 @@ eclipse {
 }
 
 repositories {
-  mavenLocal();
-//  flatDir {
-//       dirs '../irati/package/lib'
-//  }
+//  mavenLocal();
+  flatDir {
+       dirs '../irati/package/lib'
+  }
   mavenCentral();
 }
 
@@ -55,6 +55,9 @@ dependencies {
     compile 'eu.ict_pristine:pristine-dms-es:2.0.0'
     compile 'eu.ict_pristine:pristine-dms-esdsls:0.0.2'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
+    compile 'org.codehaus.jackson:jackson-core-asl:1.8.5'
+    compile 'org.codehaus.jackson:jackson-mapper-asl:1.8.5'
+    compile 'org.slf4j:slf4j-api:latest.release'
 
     testCompile group: 'junit', name: 'junit', version: 'latest.release'
     testCompile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
@@ -90,4 +93,25 @@ task listrepos << {
     		println "Name: " + it.name + "; dir: " + it.dirs 
     	}
     }
+}
+
+apply plugin: 'maven'
+
+group = 'eu.ict_pristine'
+// artifactId is taken by default, from folder name
+version = '0.0.3-SNAPSHOT'
+
+task writeNewPom << {
+    pom {
+        project {
+            inceptionYear '2014'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+        }
+    }.writeTo("pom.xml")
 }

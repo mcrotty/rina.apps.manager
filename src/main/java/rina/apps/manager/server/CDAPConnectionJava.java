@@ -117,12 +117,12 @@ public class CDAPConnectionJava implements Runnable, CDAPConnection {
 				.encodeCDAPMessage(message.build());
 
 		// Send message to MA
-		info("Sending to MA:" + getId());
+		//info("CDAP " + message.getOpCode() + " of " + message.getObjClass() +": Sending to MA[" + getId() + "] ");
+		logShortMessage(message);
 		send(encMessage);
 	}
 
-	
-	
+		
 	/**
 	 * This function registers this class as a callback for the CDAP provider.
 	 * If also processes all messages received on the port through the CDAP provider.
@@ -154,7 +154,7 @@ public class CDAPConnectionJava implements Runnable, CDAPConnection {
 //					printAscii(sdu, index, width);
 //				}				
 								    		    		
-				info("Calling process message");
+				//info("Calling process message");
 				process_message(sdu, bytesRead, port_id);		    		    	
 		    }
 		    //if ()
@@ -206,7 +206,7 @@ public class CDAPConnectionJava implements Runnable, CDAPConnection {
 			if (ws != null) {
 				ws.wrapped_send(builder);
 			} else {
-				err("No manager connection");
+				warn("No manager connection, message discarded.");
 			}
 		}
 		
@@ -264,6 +264,8 @@ public class CDAPConnectionJava implements Runnable, CDAPConnection {
 			objVal_t value = builder.getObjValue();
 			objVal_t.Builder newvalue = CDAPSerialiser.decodeJSONValue(value.getJsonval(), value.getTypeval());
 			builder.setObjValue(newvalue);
+		} else {
+			info("Not a JSON value");
 		}
 		
 		info("Message to MA [" + remote.getProcessName()+ ":" + remote.getProcessInstance() + ":" + remote.getEntityName() + ":" + remote.getEntityInstance() + "]");
@@ -825,11 +827,76 @@ public class CDAPConnectionJava implements Runnable, CDAPConnection {
 		System.out.println("INFO:" + string);
 	}
 
+	private void warn(String string) {
+		System.out.println("WARN:" + string);
+	}
+
 	private void err(String string) {
 		System.err.println("ERROR:" + string);
 	}
 
 
+	/*
+	 * Log a short but informative message
+	 */
+	private void logShortMessage(Builder message) {
+		StringBuilder b = new StringBuilder();
+		b.append("CDAP ");
+		b.append(message.getOpCode());
+		switch(message.getOpCode()) {
+		// operations on an object
+		case M_CREATE:
+		case M_DELETE:
+		case M_READ:
+		case M_WRITE:
+		case M_CANCELREAD:
+		case M_START:
+		case M_STOP:
+			b.append(" of ");
+			b.append(message.getObjClass());
+			b.append(". ");
+			break;
+		case M_CONNECT:
+		case M_RELEASE:
+			b.append("(v");
+			b.append(message.getVersion());
+			b.append(",");
+			b.append(message.getAbsSyntax());
+			b.append("). ");
+			break;
+		// Responses on an object
+		case M_CREATE_R:
+		case M_DELETE_R:
+		case M_READ_R:
+		case M_CANCELREAD_R:
+		case M_WRITE_R:
+		case M_START_R:
+		case M_STOP_R:
+			b.append(" of ");
+			b.append(message.getObjClass());
+			// missing break is intentional
+		case M_CONNECT_R:
+		case M_RELEASE_R:
+			if (message.getResult() != 0) {
+				b.append(" FAILED");
+				if (message.hasResultReason()) {
+					b.append("(");
+					b.append(message.getResultReason());
+					b.append(") ");
+				}
+				b.append(". ");
+			} else {
+				b.append(" SUCCESSFUL. ");
+			}
+			break;
+		}
+		b.append("Sending to MA[");
+		b.append(getId());
+		b.append("]");
+		//info("CDAP " + message.getOpCode() + " of " + message.getObjClass() +"Sending to MA[" + getId() + "] ");
+		info(b.toString());
+	}
+	
 
 
 	/**

@@ -91,8 +91,9 @@ public class DMSConnection extends WebSocketClient implements CDAPConnection {
 		// Convert to JSON
 		String json = CDAPSerialiser.encodeJSONMessage(message.build(), header);
 		if (json != null) {
-			// Pass on to manager 
-			info("Sending to manager: JSON=" + json);
+			// Pass on to manager
+			logShortMessage(message);
+			info(" JSON=" + json);
 			super.send(json);
 		} else {
 			err("JSON encoding of CDAP Message failed");
@@ -135,20 +136,11 @@ public class DMSConnection extends WebSocketClient implements CDAPConnection {
 					CDAPMessage.Builder message = CDAPSerialiser
 							.decodeJSONMessage(json);
 					if (message != null) {
-//						// Send message to MA
+						info("From manager JSON=" + json);
+						// Send message to MA
 						c.wrapped_send(message);
-						// Encode the missing information.
-//						((CDAPConnectionJava) c)
-//								.complete_message_for_ma(message);
-//
-//						byte[] encMessage = CDAPSerialiser
-//								.encodeCDAPMessage(message.build());
-//
-//						info("Sending to MA:" + c.getId());
-//						// Send message to MA
-//						c.send(encMessage);
 					} else {
-						warn("Event failed json conversion " + json);
+						warn("Event failed JSON conversion: " + json);
 					}
 				} else {
 					warn("Missing MA for " + name + "-" + instance);
@@ -181,6 +173,58 @@ public class DMSConnection extends WebSocketClient implements CDAPConnection {
 	/*
 	 * Handy logging functions
 	 */
+	/*
+	 * Log a short but informative message
+	 */
+	private void logShortMessage(Builder message) {
+		StringBuilder b = new StringBuilder();
+		b.append("CDAP ");
+		b.append(message.getOpCode());
+		switch(message.getOpCode()) {
+		// operations on an object
+		case M_CREATE:
+		case M_DELETE:
+		case M_READ:
+		case M_WRITE:
+		case M_CANCELREAD:
+		case M_START:
+		case M_STOP:
+			b.append(" of ");
+			b.append(message.getObjClass());
+			// missing break is intentional
+		case M_CONNECT:
+		case M_RELEASE:
+			b.append(". ");
+			break;
+		// Responses on an object
+		case M_CREATE_R:
+		case M_DELETE_R:
+		case M_READ_R:
+		case M_CANCELREAD_R:
+		case M_WRITE_R:
+		case M_START_R:
+		case M_STOP_R:
+			b.append(" of ");
+			b.append(message.getObjClass());
+			// missing break is intentional
+		case M_CONNECT_R:
+		case M_RELEASE_R:
+			if (message.getResult() != 0) {
+				b.append(" FAILED ");
+				if (message.hasResultReason()) {
+					b.append("(");
+					b.append(message.getResultReason());
+					b.append(") ");
+				}
+			} else {
+				b.append(" SUCCESSFUL ");
+			}
+			break;
+		}
+		b.append("Sending to Manager.");
+		info(b.toString());
+	}
+	
 
 	protected void warn(String string) {
 		System.err.println("WARNING: " + string);
